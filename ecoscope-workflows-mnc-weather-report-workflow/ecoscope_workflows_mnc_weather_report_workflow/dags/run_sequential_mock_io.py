@@ -7,91 +7,99 @@ Lines specific to the testing context are marked with a test tube emoji (🧪) t
 that they would not be included (or would be different) in the production version of this file.
 """
 
-import json
 import os
 import warnings  # 🧪
+from typing import Any
 
-from ecoscope_workflows_core.tasks.config import (
-    set_workflow_details as set_workflow_details,
-)
-from ecoscope_workflows_core.tasks.filter import set_time_range as set_time_range
-from ecoscope_workflows_core.tasks.groupby import set_groupers as set_groupers
-from ecoscope_workflows_core.tasks.io import set_er_connection as set_er_connection
-from ecoscope_workflows_core.testing import create_task_magicmock  # 🧪
+from ecoscope.platform.tasks.config import set_workflow_details as set_workflow_details
+from ecoscope.platform.tasks.filter import set_time_range as set_time_range
+from ecoscope.platform.tasks.groupby import set_groupers as set_groupers
+from ecoscope.platform.tasks.io import set_er_connection as set_er_connection
+from wt_contracts import validate as _validate
+from wt_task import task
+from wt_task.testing import create_func_magicmock  # 🧪
 
-get_subjectgroup_observations = create_task_magicmock(  # 🧪
-    anchor="ecoscope_workflows_ext_ecoscope.tasks.io",  # 🧪
+from .. import metadata as _metadata
+
+get_subjectgroup_observations = create_func_magicmock(  # 🧪
+    anchor="ecoscope.platform.tasks.io",  # 🧪
     func_name="get_subjectgroup_observations",  # 🧪
 )  # 🧪
-from ecoscope_workflows_core.tasks.io import persist_text as persist_text
-from ecoscope_workflows_core.tasks.results import gather_dashboard as gather_dashboard
-from ecoscope_workflows_core.tasks.skip import (
+from ecoscope.platform.tasks.analysis import summarize_df as summarize_df
+from ecoscope.platform.tasks.io import persist_df as persist_df
+from ecoscope.platform.tasks.io import persist_text as persist_text
+from ecoscope.platform.tasks.results import (
+    create_plot_widget_single_view as create_plot_widget_single_view,
+)
+from ecoscope.platform.tasks.results import draw_line_chart as draw_line_chart
+from ecoscope.platform.tasks.results import gather_dashboard as gather_dashboard
+from ecoscope.platform.tasks.skip import (
     any_dependency_skipped as any_dependency_skipped,
 )
-from ecoscope_workflows_core.tasks.skip import any_is_empty_df as any_is_empty_df
-from ecoscope_workflows_core.tasks.transformation import (
+from ecoscope.platform.tasks.skip import any_is_empty_df as any_is_empty_df
+from ecoscope.platform.tasks.skip import never as never
+from ecoscope.platform.tasks.transformation import (
     add_temporal_index as add_temporal_index,
 )
-from ecoscope_workflows_core.tasks.transformation import (
+from ecoscope.platform.tasks.transformation import (
     extract_column_as_type as extract_column_as_type,
 )
-from ecoscope_workflows_core.tasks.transformation import (
+from ecoscope.platform.tasks.transformation import (
     extract_value_from_json_column as extract_value_from_json_column,
 )
-from ecoscope_workflows_core.tasks.transformation import map_columns as map_columns
+from ecoscope.platform.tasks.transformation import map_columns as map_columns
 from ecoscope_workflows_ext_custom.tasks.io import html_to_png as html_to_png
-from ecoscope_workflows_ext_ecoscope.tasks.analysis import summarize_df as summarize_df
-from ecoscope_workflows_ext_ecoscope.tasks.io import persist_df as persist_df
-from ecoscope_workflows_ext_ecoscope.tasks.results import (
-    draw_line_chart as draw_line_chart,
-)
-
-from ..params import Params
 
 
-def main(params: Params):
+def main(params: dict[str, Any], validate_params_schema: bool = True):
     warnings.warn("This test script should not be used in production!")  # 🧪
 
-    params_dict = json.loads(params.model_dump_json(exclude_unset=True))
+    if validate_params_schema:
+        _validate(params, _metadata.load_params_schema())
 
     workflow_details = (
-        set_workflow_details.validate()
+        task(set_workflow_details)
+        .validate()
         .set_task_instance_id("workflow_details")
         .handle_errors()
         .with_tracing()
-        .partial(**(params_dict.get("workflow_details") or {}))
+        .partial(**(params.get("workflow_details") or {}))
         .call()
     )
 
     time_range = (
-        set_time_range.validate()
+        task(set_time_range)
+        .validate()
         .set_task_instance_id("time_range")
         .handle_errors()
         .with_tracing()
-        .partial(**(params_dict.get("time_range") or {}))
+        .partial(**(params.get("time_range") or {}))
         .call()
     )
 
     groupers = (
-        set_groupers.validate()
+        task(set_groupers)
+        .validate()
         .set_task_instance_id("groupers")
         .handle_errors()
         .with_tracing()
-        .partial(groupers=[], **(params_dict.get("groupers") or {}))
+        .partial(groupers=[], **(params.get("groupers") or {}))
         .call()
     )
 
     er_client_name = (
-        set_er_connection.validate()
+        task(set_er_connection)
+        .validate()
         .set_task_instance_id("er_client_name")
         .handle_errors()
         .with_tracing()
-        .partial(**(params_dict.get("er_client_name") or {}))
+        .partial(**(params.get("er_client_name") or {}))
         .call()
     )
 
     subject_observations = (
-        get_subjectgroup_observations.validate()
+        task(get_subjectgroup_observations)
+        # 🧪 validation omitted for mocked IO task (returns pre-loaded example data)
         .set_task_instance_id("subject_observations")
         .handle_errors()
         .with_tracing()
@@ -110,13 +118,14 @@ def main(params: Params):
             include_details=False,
             include_subjectsource_details=False,
             subject_group_name="ER2ER - From GMMF",
-            **(params_dict.get("subject_observations") or {}),
+            **(params.get("subject_observations") or {}),
         )
         .call()
     )
 
     extract_precipitation = (
-        extract_value_from_json_column.validate()
+        task(extract_value_from_json_column)
+        .validate()
         .set_task_instance_id("extract_precipitation")
         .handle_errors()
         .with_tracing()
@@ -133,13 +142,14 @@ def main(params: Params):
             field_name_options=["precipitation"],
             output_type="float",
             output_column_name="precipitation",
-            **(params_dict.get("extract_precipitation") or {}),
+            **(params.get("extract_precipitation") or {}),
         )
         .call()
     )
 
     extract_temperature = (
-        extract_value_from_json_column.validate()
+        task(extract_value_from_json_column)
+        .validate()
         .set_task_instance_id("extract_temperature")
         .handle_errors()
         .with_tracing()
@@ -156,13 +166,14 @@ def main(params: Params):
             field_name_options=["surface_air_temperature"],
             output_type="float",
             output_column_name="temperature",
-            **(params_dict.get("extract_temperature") or {}),
+            **(params.get("extract_temperature") or {}),
         )
         .call()
     )
 
     extract_wind_speed = (
-        extract_value_from_json_column.validate()
+        task(extract_value_from_json_column)
+        .validate()
         .set_task_instance_id("extract_wind_speed")
         .handle_errors()
         .with_tracing()
@@ -179,13 +190,14 @@ def main(params: Params):
             field_name_options=["wind_speed"],
             output_type="float",
             output_column_name="wind_speed",
-            **(params_dict.get("extract_wind_speed") or {}),
+            **(params.get("extract_wind_speed") or {}),
         )
         .call()
     )
 
     extract_wind_gusts = (
-        extract_value_from_json_column.validate()
+        task(extract_value_from_json_column)
+        .validate()
         .set_task_instance_id("extract_wind_gusts")
         .handle_errors()
         .with_tracing()
@@ -202,13 +214,14 @@ def main(params: Params):
             field_name_options=["wind_gusts"],
             output_type="float",
             output_column_name="wind_gusts",
-            **(params_dict.get("extract_wind_gusts") or {}),
+            **(params.get("extract_wind_gusts") or {}),
         )
         .call()
     )
 
     extract_soil_temperature = (
-        extract_value_from_json_column.validate()
+        task(extract_value_from_json_column)
+        .validate()
         .set_task_instance_id("extract_soil_temperature")
         .handle_errors()
         .with_tracing()
@@ -225,13 +238,14 @@ def main(params: Params):
             field_name_options=["soil_temperature"],
             output_type="float",
             output_column_name="soil_temperature",
-            **(params_dict.get("extract_soil_temperature") or {}),
+            **(params.get("extract_soil_temperature") or {}),
         )
         .call()
     )
 
     extract_relative_humidity = (
-        extract_value_from_json_column.validate()
+        task(extract_value_from_json_column)
+        .validate()
         .set_task_instance_id("extract_relative_humidity")
         .handle_errors()
         .with_tracing()
@@ -248,13 +262,14 @@ def main(params: Params):
             field_name_options=["relative_humidity"],
             output_type="float",
             output_column_name="relative_humidity",
-            **(params_dict.get("extract_relative_humidity") or {}),
+            **(params.get("extract_relative_humidity") or {}),
         )
         .call()
     )
 
     extract_pressure = (
-        extract_value_from_json_column.validate()
+        task(extract_value_from_json_column)
+        .validate()
         .set_task_instance_id("extract_pressure")
         .handle_errors()
         .with_tracing()
@@ -271,13 +286,14 @@ def main(params: Params):
             field_name_options=["atmospheric_pressure"],
             output_type="float",
             output_column_name="atmospheric_pressure",
-            **(params_dict.get("extract_pressure") or {}),
+            **(params.get("extract_pressure") or {}),
         )
         .call()
     )
 
     extract_date = (
-        extract_column_as_type.validate()
+        task(extract_column_as_type)
+        .validate()
         .set_task_instance_id("extract_date")
         .handle_errors()
         .with_tracing()
@@ -293,13 +309,14 @@ def main(params: Params):
             column_name="fixtime",
             output_type="date",
             output_column_name="date",
-            **(params_dict.get("extract_date") or {}),
+            **(params.get("extract_date") or {}),
         )
         .call()
     )
 
     rename_grouper_columns = (
-        map_columns.validate()
+        task(map_columns)
+        .validate()
         .set_task_instance_id("rename_grouper_columns")
         .handle_errors()
         .with_tracing()
@@ -316,13 +333,14 @@ def main(params: Params):
             drop_columns=[],
             retain_columns=[],
             rename_columns={"extra__subject__name": "weather_station"},
-            **(params_dict.get("rename_grouper_columns") or {}),
+            **(params.get("rename_grouper_columns") or {}),
         )
         .call()
     )
 
     df_with_temporal_index = (
-        add_temporal_index.validate()
+        task(add_temporal_index)
+        .validate()
         .set_task_instance_id("df_with_temporal_index")
         .handle_errors()
         .with_tracing()
@@ -339,13 +357,14 @@ def main(params: Params):
             cast_to_datetime=True,
             groupers=groupers,
             format="mixed",
-            **(params_dict.get("df_with_temporal_index") or {}),
+            **(params.get("df_with_temporal_index") or {}),
         )
         .call()
     )
 
     daily_weather = (
-        summarize_df.validate()
+        task(summarize_df)
+        .validate()
         .set_task_instance_id("daily_weather")
         .handle_errors()
         .with_tracing()
@@ -397,13 +416,14 @@ def main(params: Params):
                 },
             ],
             reset_index=True,
-            **(params_dict.get("daily_weather") or {}),
+            **(params.get("daily_weather") or {}),
         )
         .call()
     )
 
     persist_weather_summary = (
-        persist_df.validate()
+        task(persist_df)
+        .validate()
         .set_task_instance_id("persist_weather_summary")
         .handle_errors()
         .with_tracing()
@@ -419,13 +439,14 @@ def main(params: Params):
             filetype="csv",
             df=daily_weather,
             filename="weather_summary_table",
-            **(params_dict.get("persist_weather_summary") or {}),
+            **(params.get("persist_weather_summary") or {}),
         )
         .call()
     )
 
     precipitation_chart = (
-        draw_line_chart.validate()
+        task(draw_line_chart)
+        .validate()
         .set_task_instance_id("precipitation_chart")
         .handle_errors()
         .with_tracing()
@@ -464,13 +485,14 @@ def main(params: Params):
                 "legend_title": "Weather Station",
                 "hovermode": "x unified",
             },
-            **(params_dict.get("precipitation_chart") or {}),
+            **(params.get("precipitation_chart") or {}),
         )
         .call()
     )
 
     persist_precipitation = (
-        persist_text.validate()
+        task(persist_text)
+        .validate()
         .set_task_instance_id("persist_precipitation")
         .handle_errors()
         .with_tracing()
@@ -485,13 +507,34 @@ def main(params: Params):
             root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
             text=precipitation_chart,
             filename="precipitation_readings_over_time.html",
-            **(params_dict.get("persist_precipitation") or {}),
+            **(params.get("persist_precipitation") or {}),
+        )
+        .call()
+    )
+
+    precipitation_widget = (
+        task(create_plot_widget_single_view)
+        .validate()
+        .set_task_instance_id("precipitation_widget")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            title="Precipitation",
+            data=persist_precipitation,
+            **(params.get("precipitation_widget") or {}),
         )
         .call()
     )
 
     temperature_chart = (
-        draw_line_chart.validate()
+        task(draw_line_chart)
+        .validate()
         .set_task_instance_id("temperature_chart")
         .handle_errors()
         .with_tracing()
@@ -527,13 +570,14 @@ def main(params: Params):
                 "legend_title": "Weather Station",
                 "hovermode": "x unified",
             },
-            **(params_dict.get("temperature_chart") or {}),
+            **(params.get("temperature_chart") or {}),
         )
         .call()
     )
 
     persist_temperature = (
-        persist_text.validate()
+        task(persist_text)
+        .validate()
         .set_task_instance_id("persist_temperature")
         .handle_errors()
         .with_tracing()
@@ -548,13 +592,34 @@ def main(params: Params):
             root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
             text=temperature_chart,
             filename="temperature_readings_over_time.html",
-            **(params_dict.get("persist_temperature") or {}),
+            **(params.get("persist_temperature") or {}),
+        )
+        .call()
+    )
+
+    temperature_widget = (
+        task(create_plot_widget_single_view)
+        .validate()
+        .set_task_instance_id("temperature_widget")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            title="Temperature",
+            data=persist_temperature,
+            **(params.get("temperature_widget") or {}),
         )
         .call()
     )
 
     wind_speed_chart = (
-        draw_line_chart.validate()
+        task(draw_line_chart)
+        .validate()
         .set_task_instance_id("wind_speed_chart")
         .handle_errors()
         .with_tracing()
@@ -590,13 +655,14 @@ def main(params: Params):
                 "legend_title": "Weather Station",
                 "hovermode": "x unified",
             },
-            **(params_dict.get("wind_speed_chart") or {}),
+            **(params.get("wind_speed_chart") or {}),
         )
         .call()
     )
 
     persist_wind_speed = (
-        persist_text.validate()
+        task(persist_text)
+        .validate()
         .set_task_instance_id("persist_wind_speed")
         .handle_errors()
         .with_tracing()
@@ -611,13 +677,34 @@ def main(params: Params):
             root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
             text=wind_speed_chart,
             filename="wind_speed_readings_over_time.html",
-            **(params_dict.get("persist_wind_speed") or {}),
+            **(params.get("persist_wind_speed") or {}),
+        )
+        .call()
+    )
+
+    wind_speed_widget = (
+        task(create_plot_widget_single_view)
+        .validate()
+        .set_task_instance_id("wind_speed_widget")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            title="Wind Speed",
+            data=persist_wind_speed,
+            **(params.get("wind_speed_widget") or {}),
         )
         .call()
     )
 
     wind_gusts_chart = (
-        draw_line_chart.validate()
+        task(draw_line_chart)
+        .validate()
         .set_task_instance_id("wind_gusts_chart")
         .handle_errors()
         .with_tracing()
@@ -653,13 +740,14 @@ def main(params: Params):
                 "legend_title": "Weather Station",
                 "hovermode": "x unified",
             },
-            **(params_dict.get("wind_gusts_chart") or {}),
+            **(params.get("wind_gusts_chart") or {}),
         )
         .call()
     )
 
     persist_wind_gusts = (
-        persist_text.validate()
+        task(persist_text)
+        .validate()
         .set_task_instance_id("persist_wind_gusts")
         .handle_errors()
         .with_tracing()
@@ -674,13 +762,34 @@ def main(params: Params):
             root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
             text=wind_gusts_chart,
             filename="wind_gusts_readings_over_time.html",
-            **(params_dict.get("persist_wind_gusts") or {}),
+            **(params.get("persist_wind_gusts") or {}),
+        )
+        .call()
+    )
+
+    wind_gusts_widget = (
+        task(create_plot_widget_single_view)
+        .validate()
+        .set_task_instance_id("wind_gusts_widget")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            title="Wind Gusts",
+            data=persist_wind_gusts,
+            **(params.get("wind_gusts_widget") or {}),
         )
         .call()
     )
 
     soil_temp_chart = (
-        draw_line_chart.validate()
+        task(draw_line_chart)
+        .validate()
         .set_task_instance_id("soil_temp_chart")
         .handle_errors()
         .with_tracing()
@@ -716,13 +825,14 @@ def main(params: Params):
                 "legend_title": "Weather Station",
                 "hovermode": "x unified",
             },
-            **(params_dict.get("soil_temp_chart") or {}),
+            **(params.get("soil_temp_chart") or {}),
         )
         .call()
     )
 
     persist_soil_temp = (
-        persist_text.validate()
+        task(persist_text)
+        .validate()
         .set_task_instance_id("persist_soil_temp")
         .handle_errors()
         .with_tracing()
@@ -737,13 +847,34 @@ def main(params: Params):
             root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
             text=soil_temp_chart,
             filename="soil_temperature_readings_over_time.html",
-            **(params_dict.get("persist_soil_temp") or {}),
+            **(params.get("persist_soil_temp") or {}),
+        )
+        .call()
+    )
+
+    soil_temp_widget = (
+        task(create_plot_widget_single_view)
+        .validate()
+        .set_task_instance_id("soil_temp_widget")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            title="Soil Temperature",
+            data=persist_soil_temp,
+            **(params.get("soil_temp_widget") or {}),
         )
         .call()
     )
 
     rel_humidity_chart = (
-        draw_line_chart.validate()
+        task(draw_line_chart)
+        .validate()
         .set_task_instance_id("rel_humidity_chart")
         .handle_errors()
         .with_tracing()
@@ -779,13 +910,14 @@ def main(params: Params):
                 "legend_title": "Weather Station",
                 "hovermode": "x unified",
             },
-            **(params_dict.get("rel_humidity_chart") or {}),
+            **(params.get("rel_humidity_chart") or {}),
         )
         .call()
     )
 
     persist_rel_humidity = (
-        persist_text.validate()
+        task(persist_text)
+        .validate()
         .set_task_instance_id("persist_rel_humidity")
         .handle_errors()
         .with_tracing()
@@ -800,13 +932,34 @@ def main(params: Params):
             root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
             text=rel_humidity_chart,
             filename="relative_humidity_readings_over_time.html",
-            **(params_dict.get("persist_rel_humidity") or {}),
+            **(params.get("persist_rel_humidity") or {}),
+        )
+        .call()
+    )
+
+    rel_humidity_widget = (
+        task(create_plot_widget_single_view)
+        .validate()
+        .set_task_instance_id("rel_humidity_widget")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            title="Relative Humidity",
+            data=persist_rel_humidity,
+            **(params.get("rel_humidity_widget") or {}),
         )
         .call()
     )
 
     pressure_chart = (
-        draw_line_chart.validate()
+        task(draw_line_chart)
+        .validate()
         .set_task_instance_id("pressure_chart")
         .handle_errors()
         .with_tracing()
@@ -842,13 +995,14 @@ def main(params: Params):
                 "legend_title": "Weather Station",
                 "hovermode": "x unified",
             },
-            **(params_dict.get("pressure_chart") or {}),
+            **(params.get("pressure_chart") or {}),
         )
         .call()
     )
 
     persist_pressure = (
-        persist_text.validate()
+        task(persist_text)
+        .validate()
         .set_task_instance_id("persist_pressure")
         .handle_errors()
         .with_tracing()
@@ -863,13 +1017,34 @@ def main(params: Params):
             root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
             text=pressure_chart,
             filename="atmospheric_pressure_readings_over_time.html",
-            **(params_dict.get("persist_pressure") or {}),
+            **(params.get("persist_pressure") or {}),
+        )
+        .call()
+    )
+
+    pressure_widget = (
+        task(create_plot_widget_single_view)
+        .validate()
+        .set_task_instance_id("pressure_widget")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            title="Atmospheric Pressure",
+            data=persist_pressure,
+            **(params.get("pressure_widget") or {}),
         )
         .call()
     )
 
     convert_chart_html_png = (
-        html_to_png.validate()
+        task(html_to_png)
+        .validate()
         .set_task_instance_id("convert_chart_html_png")
         .handle_errors()
         .with_tracing()
@@ -900,22 +1075,31 @@ def main(params: Params):
                 "timeout": 0,
                 "max_concurrent_pages": 10,
             },
-            **(params_dict.get("convert_chart_html_png") or {}),
+            **(params.get("convert_chart_html_png") or {}),
         )
         .call()
     )
 
     mnc_events_dashboard = (
-        gather_dashboard.validate()
+        task(gather_dashboard)
+        .validate()
         .set_task_instance_id("mnc_events_dashboard")
         .handle_errors()
         .with_tracing()
         .partial(
             details=workflow_details,
-            widgets=[],
+            widgets=[
+                precipitation_widget,
+                temperature_widget,
+                wind_speed_widget,
+                wind_gusts_widget,
+                soil_temp_widget,
+                rel_humidity_widget,
+                pressure_widget,
+            ],
             time_range=time_range,
             groupers=groupers,
-            **(params_dict.get("mnc_events_dashboard") or {}),
+            **(params.get("mnc_events_dashboard") or {}),
         )
         .call()
     )
