@@ -118,7 +118,7 @@ story += [
     sp(4),
     p("Daily weather summaries and time-series charts from GMMF weather stations", SUBTITLE),
     sp(4),
-    p(f"Generated {date.today().strftime('%B %d, %Y')}", META),
+    p(f"Version 1.1  ·  Generated {date.today().strftime('%B %d, %Y')}", META),
     p("Workflow id: <b>mnc_weather_report</b>", META),
     PageBreak(),
 ]
@@ -173,17 +173,23 @@ story += [
     h1("2. Dependencies"),
     hr(),
     h2("2.1  Python packages"),
+    p("As of the migration to the <b>ecoscope-platform</b> task/compiler runtime, "
+      "the workflow's requirements are:"),
     make_table(
         [
             ["Package", "Version", "Channel"],
-            ["ecoscope-workflows-core",        "0.22.18.*", "ecoscope-workflows"],
-            ["ecoscope-workflows-ext-ecoscope","0.22.18.*", "ecoscope-workflows"],
-            ["ecoscope-workflows-ext-custom",  "0.0.43.*",  "ecoscope-workflows-custom"],
-            ["ecoscope-workflows-ext-ste",     "0.0.18.*",  "ecoscope-workflows-custom"],
-            ["ecoscope-workflows-ext-mnc",     "0.0.8.*",   "ecoscope-workflows-custom"],
+            ["ecoscope-platform",              ">=2.15.0, <2.16.0", "ecoscope-workflows"],
+            ["ecoscope-workflows-ext-custom",  "0.1.0rc14.*",       "ecoscope-workflows-custom"],
+            ["pydeck",                         "0.9.2",             "conda-forge"],
         ],
-        [6.5*cm, 3*cm, W - 9.5*cm],
+        [6.5*cm, 3.5*cm, W - 10*cm],
     ),
+    note("ecoscope-workflows-core, ecoscope-workflows-ext-ecoscope, "
+         "ecoscope-workflows-ext-ste, and ecoscope-workflows-ext-mnc are not "
+         "dependencies of this workflow — every task it uses "
+         "(get_subjectgroup_observations, extract_value_from_json_column, "
+         "summarize_df, draw_line_chart, html_to_png, gather_dashboard, etc.) "
+         "resolves from ecoscope-platform or ecoscope-workflows-ext-custom alone."),
     sp(6),
     h2("2.2  Connection"),
     make_table(
@@ -402,15 +408,15 @@ story += [
             ["height",               "720 px"],
             ["full_page",            "false"],
             ["device_scale_factor",  "2.0 (effective resolution: 2 560 × 1 440)"],
-            ["wait_for_timeout",     "10 ms (static Plotly HTML — no tile maps)"],
+            ["wait_for_timeout",     "1 ms (static Plotly HTML — no tile maps)"],
             ["timeout",              "0 (no overall page timeout)"],
-            ["max_concurrent_pages", "5 (up to 5 charts rendered in parallel)"],
+            ["max_concurrent_pages", "10 (up to 10 charts rendered in parallel)"],
         ],
         [5*cm, W - 5*cm],
     ),
     note("Batching all seven charts into one html_to_png call with "
-         "max_concurrent_pages: 5 is more efficient than seven separate "
-         "calls. The 10 ms wait_for_timeout is sufficient because all "
+         "max_concurrent_pages: 10 is more efficient than seven separate "
+         "calls. The near-zero wait_for_timeout is sufficient because all "
          "charts are static Plotly HTML with no external tile dependencies."),
     PageBreak(),
 ]
@@ -481,9 +487,26 @@ story += [
       "zoom_map_and_screenshot calls."),
     sp(6),
     h2("8.4  Dashboard"),
-    p("The workflow concludes with <b>gather_dashboard</b> which packages "
-      "workflow details, time range, and groupers. The <b>widgets</b> list "
-      "is empty — no single-value or map widgets are configured."),
+    p("The workflow concludes with <b>gather_dashboard</b>, which packages "
+      "workflow details, time range, groupers, and a <b>widgets</b> list "
+      "containing seven plot widgets — one <b>create_plot_widget_single_view</b> "
+      "per chart, each wired from its persisted HTML file:"),
+    make_table(
+        [
+            ["Widget title", "Source"],
+            ["Precipitation",         "precipitation_widget"],
+            ["Temperature",           "temperature_widget"],
+            ["Wind Speed",            "wind_speed_widget"],
+            ["Wind Gusts",            "wind_gusts_widget"],
+            ["Soil Temperature",      "soil_temp_widget"],
+            ["Relative Humidity",     "rel_humidity_widget"],
+            ["Atmospheric Pressure",  "pressure_widget"],
+        ],
+        [6*cm, W - 6*cm],
+    ),
+    note("Each widget-creation task carries <b>skipif: conditions: [never]</b>, "
+         "so it always runs and appears on the dashboard even if its "
+         "underlying chart data ended up empty for the run."),
     PageBreak(),
 ]
 
@@ -496,11 +519,9 @@ story += [
     make_table(
         [
             ["Package", "Version pinned in spec.yaml"],
-            ["ecoscope-workflows-core",        "0.22.18.*"],
-            ["ecoscope-workflows-ext-ecoscope","0.22.18.*"],
-            ["ecoscope-workflows-ext-custom",  "0.0.43.*"],
-            ["ecoscope-workflows-ext-ste",     "0.0.18.*"],
-            ["ecoscope-workflows-ext-mnc",     "0.0.8.*"],
+            ["ecoscope-platform",              ">=2.15.0, <2.16.0"],
+            ["ecoscope-workflows-ext-custom",  "0.1.0rc14.*"],
+            ["pydeck",                         "0.9.2"],
         ],
         [7*cm, W - 7*cm],
     ),

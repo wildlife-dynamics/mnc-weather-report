@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Troubleshooting — MNC Weather Report</title>
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="bar">
+      <a class="brand" href="index.html">MNC Weather Report</a>
+      <nav>
+        <a href="index.html">Overview</a>
+        <a href="user-guide.html">User Guide</a>
+        <a href="technical-guide.html">Technical Guide</a>
+        <a href="troubleshooting.html" class="active">Troubleshooting</a>
+        <a href="https://github.com/wildlife-dynamics/mnc-weather-report">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <h1>Troubleshooting</h1>
+    <p class="lede">Common issues encountered while configuring, running, or contributing to the MNC Weather Report workflow, and how to resolve them. If your issue isn't listed here, open an issue on <a href="https://github.com/wildlife-dynamics/mnc-weather-report/issues">GitHub</a>.</p>
+
+    <h2>Configuration &amp; Connections</h2>
+
+    <div class="error-block">
+      <p class="symptom">No data / everything skipped</p>
+      <p>This workflow only reads from the EarthRanger subject group <strong>ER2ER - From GMMF</strong> &mdash; this name is hardcoded in <code>spec.yaml</code> and is not a configurable field anywhere in the workflow form. If your instance's weather stations are registered under a different subject group name, this workflow won't find them; every task from observation retrieval onward shares a skip-on-empty policy, so the run will complete but produce empty outputs rather than erroring.</p>
+    </div>
+
+    <div class="error-block">
+      <p class="symptom">EarthRanger connection fails or times out</p>
+      <p>Verify the server URL, username, and password configured in the <a href="user-guide.html#connection">Data Source Connection</a>. Confirm you can log into that same EarthRanger instance directly in a browser with the same credentials. Credentials aren't validated at setup time, so an invalid password only surfaces as an error once the workflow actually runs.</p>
+    </div>
+
+    <div class="error-block">
+      <p class="symptom">Some charts are missing a variable / show gaps</p>
+      <p>Each of the seven variables (precipitation, surface air temperature, wind speed, wind gusts, soil temperature, relative humidity, atmospheric pressure) is extracted from the observation's JSON detail field by matching a specific key name. If a given weather station's observations don't include that key in their JSON payload, that variable comes back empty for that station &mdash; this is a per-station data issue in EarthRanger, not a workflow configuration problem.</p>
+    </div>
+
+    <h2>Output &amp; Charts</h2>
+
+    <div class="error-block">
+      <p class="symptom">weather_summary_table.csv is empty or missing rows for a station</p>
+      <p>The daily summary is grouped by <strong>[weather_station, date]</strong>. A missing day for a station usually means there were no observations from that station on that date within your selected <a href="user-guide.html#time-range">Time Range</a> &mdash; widen the range and re-run to confirm.</p>
+    </div>
+
+    <div class="error-block">
+      <p class="symptom">A chart's Y-axis values look wrong (e.g. temperature far too high/low)</p>
+      <p>Check which aggregation is applied to that variable: precipitation is <strong>summed</strong> per day, wind gusts takes the daily <strong>maximum</strong>, and everything else (temperature, wind speed, soil temperature, relative humidity, atmospheric pressure) is <strong>averaged</strong>. A station reporting in different units than expected (e.g. Fahrenheit instead of Celsius) will also produce values that look "wrong" relative to the chart's labeled unit &mdash; this reflects what EarthRanger recorded, not a workflow bug.</p>
+    </div>
+
+    <div class="error-block">
+      <p class="symptom">Dashboard widgets are missing charts</p>
+      <p>The dashboard always shows all seven plot widgets (Precipitation, Temperature, Wind Speed, Wind Gusts, Soil Temperature, Relative Humidity, Atmospheric Pressure) &mdash; each widget-creation task is set to always run, even on empty data. If a widget appears blank, the underlying variable had no data for the analysis period, rather than the widget failing to render.</p>
+    </div>
+
+    <div class="error-block">
+      <p class="symptom">No outputs written / can't find results</p>
+      <p>All outputs are written to the directory specified by the <code>ECOSCOPE_WORKFLOWS_RESULTS</code> environment variable. Confirm it's set and points to a directory the workflow process can write to.</p>
+    </div>
+
+    <h2>Contributing &amp; CI</h2>
+    <p>These apply if you're modifying the workflow itself (<code>spec.yaml</code>, <code>test-cases.yaml</code>, or the generated <code>ecoscope-workflows-mnc-weather-report-workflow/</code> directory) and opening a pull request.</p>
+
+    <div class="error-block">
+      <p class="symptom"><code>Generated files differ from committed files in ecoscope-workflows-mnc-weather-report-workflow</code></p>
+      <p>The generated workflow directory is out of sync with <code>spec.yaml</code>. Run the recompile script locally and commit the result:</p>
+      <pre><code>pixi run --manifest-path pixi.toml --locked bash -c "./dev/recompile.sh --update"</code></pre>
+    </div>
+
+    <div class="error-block">
+      <p class="symptom"><code>Found wildcard version (*) in requirements</code> or <code>Found local file channel (file://) in requirements</code></p>
+      <p>In <code>spec.yaml</code>, every dependency under <code>requirements</code> must pin an exact version and use a remote conda channel &mdash; wildcard versions and local <code>file://</code> channels are only valid for local development, not for CI using published packages.</p>
+    </div>
+
+    <div class="error-block">
+      <p class="symptom"><code>VERSION.yaml (...) must be greater than main branch (...)</code></p>
+      <p>Bump <code>MAJ</code>/<code>MIN</code>/<code>PATCH</code> in <code>ecoscope-workflows-mnc-weather-report-workflow/VERSION.yaml</code> so it's strictly greater than the version on <code>main</code> before opening or updating a PR.</p>
+    </div>
+
+    <div class="error-block">
+      <p class="symptom"><code>test-cases.yaml</code> references a <code>configure_base_maps</code> parameter that doesn't do anything</p>
+      <p>The current <code>test-cases.yaml</code> includes a <code>configure_base_maps</code> override, but <code>spec.yaml</code> has no task with that ID &mdash; this workflow doesn't render any maps. It's a harmless leftover (likely copied from another workflow's test case) rather than something actively wired in; if you're cleaning up <code>test-cases.yaml</code>, it's safe to remove.</p>
+    </div>
+
+    <div class="error-block">
+      <p class="symptom">Workflow tests fail in CI but pass locally (or vice versa)</p>
+      <p><code>test.yml</code> runs test cases against all of <code>ubuntu-latest</code>, <code>macos-latest</code>, and <code>windows-latest</code>. If a test only fails on CI, check whether it depends on EarthRanger credentials being available as secrets or on OS-specific path handling.</p>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p>MNC Weather Report &middot; <a href="https://github.com/wildlife-dynamics/mnc-weather-report">wildlife-dynamics/mnc-weather-report</a> on GitHub</p>
+  </footer>
+</body>
+</html>

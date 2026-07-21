@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Technical Guide — MNC Weather Report</title>
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="bar">
+      <a class="brand" href="index.html">MNC Weather Report</a>
+      <nav>
+        <a href="index.html">Overview</a>
+        <a href="user-guide.html">User Guide</a>
+        <a href="technical-guide.html" class="active">Technical Guide</a>
+        <a href="troubleshooting.html">Troubleshooting</a>
+        <a href="https://github.com/wildlife-dynamics/mnc-weather-report">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <h1>Technical Guide</h1>
+    <p class="lede">A deeper look at how the MNC Weather Report workflow is built: the observation extraction chain, daily aggregation rules, chart configuration, and dashboard assembly.</p>
+
+    <p>
+      <a href="assets/mnc_weather_report_technical_guide.pdf">Download the full Technical Guide (PDF)</a>
+      <span class="badge">v1.1</span>
+    </p>
+    <p>Version 1.1 corrects several stale references: the package list now reflects the migration to <code>ecoscope-platform</code> (the previous list of five packages, including two that this workflow never actually depended on, is gone); the PNG conversion numbers (<code>wait_for_timeout</code>, <code>max_concurrent_pages</code>) are corrected; and the Dashboard section is rewritten &mdash; it previously claimed the dashboard has no widgets, when the spec actually wires up seven plot widgets, one per chart.</p>
+
+    <h2>Contents</h2>
+    <ol>
+      <li>Overview
+        <ol type="a"><li>Output summary</li></ol>
+      </li>
+      <li>Dependencies
+        <ol type="a">
+          <li>Python packages</li>
+          <li>Connection</li>
+          <li>Subject group (fixed)</li>
+          <li>Grouper</li>
+        </ol>
+      </li>
+      <li>Observation Ingestion and Variable Extraction
+        <ol type="a">
+          <li>Observation retrieval</li>
+          <li>Sequential variable extraction</li>
+          <li>Date extraction and column renaming</li>
+        </ol>
+      </li>
+      <li>Daily Weather Summary</li>
+      <li>Line Charts
+        <ol type="a">
+          <li>Shared chart configuration</li>
+          <li>Per-chart y-axis and output filename</li>
+        </ol>
+      </li>
+      <li>PNG Conversion</li>
+      <li>Output Files</li>
+      <li>Workflow Execution Logic
+        <ol type="a">
+          <li>Per-task skip conditions</li>
+          <li>Linear pipeline</li>
+          <li>No maps or spatial outputs</li>
+          <li>Dashboard</li>
+        </ol>
+      </li>
+      <li>Software Versions</li>
+    </ol>
+
+    <h2>Read it here</h2>
+    <p>The guide is embedded below. If it doesn't render in your browser, use the download link above.</p>
+    <embed src="assets/mnc_weather_report_technical_guide.pdf" type="application/pdf" width="100%" height="900px" style="border: 1px solid #d8e8d8; border-radius: 6px;" />
+  </main>
+
+  <footer class="site-footer">
+    <p>MNC Weather Report &middot; <a href="https://github.com/wildlife-dynamics/mnc-weather-report">wildlife-dynamics/mnc-weather-report</a> on GitHub</p>
+  </footer>
+</body>
+</html>

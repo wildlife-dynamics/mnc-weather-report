@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>User Guide — MNC Weather Report</title>
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="bar">
+      <a class="brand" href="index.html">MNC Weather Report</a>
+      <nav>
+        <a href="index.html">Overview</a>
+        <a href="user-guide.html" class="active">User Guide</a>
+        <a href="technical-guide.html">Technical Guide</a>
+        <a href="troubleshooting.html">Troubleshooting</a>
+        <a href="https://github.com/wildlife-dynamics/mnc-weather-report">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <h1>MNC Weather Report &mdash; User Guide</h1>
+    <p class="lede">This guide walks you through loading, configuring, and running the MNC Weather Report workflow, which retrieves weather station observations from EarthRanger and produces daily summary tables and interactive time-series charts for seven meteorological variables.</p>
+
+    <h2>What it produces</h2>
+    <ul>
+      <li><strong>1 daily weather summary CSV</strong> &mdash; precipitation, temperature, wind speed, wind gusts, soil temperature, relative humidity, and atmospheric pressure aggregated per weather station and date</li>
+      <li><strong>7 line charts (HTML + PNG)</strong> &mdash; one per meteorological variable, coloured by weather station, covering the full analysis time range</li>
+      <li><strong>An interactive dashboard</strong> &mdash; one plot widget per chart (7 total)</li>
+    </ul>
+
+    <h2>Requirements</h2>
+    <ul>
+      <li>Access to an <strong>EarthRanger</strong> instance with weather station observations recorded under the subject group <strong>ER2ER - From GMMF</strong> for the analysis period (this subject group name is fixed and not user-configurable)</li>
+    </ul>
+
+    <h2 id="load">1. Load the Workflow</h2>
+    <p>In the workflow runner, go to <strong>Workflow Templates</strong> and click <strong>Add Workflow Template</strong>. Paste this repository's URL into the <strong>Github Link</strong> field, then click <strong>Add Template</strong>:</p>
+    <pre><code>https://github.com/wildlife-dynamics/mnc-weather-report.git</code></pre>
+    <p>Once added, it appears in the <strong>Workflow Templates</strong> list as <strong>mnc_weather_report</strong>. Click the card to open the workflow configuration form.</p>
+
+    <h2 id="configure">2. Configure the Workflow</h2>
+
+    <h3 id="connection">Data Source Connection</h3>
+    <p>Navigate to <strong>Data Sources</strong> and click <strong>Connect</strong>, then select <strong>EarthRanger</strong>. Fill in the connection form:</p>
+    <table>
+      <thead><tr><th>Field</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Data Source Name</td><td>A label to identify this connection (e.g. <code>Mara North Conservancy</code>)</td></tr>
+        <tr><td>EarthRanger URL</td><td>Your instance URL (e.g. <code>your-site.pamdas.org</code>)</td></tr>
+        <tr><td>EarthRanger Username</td><td>Your EarthRanger username</td></tr>
+        <tr><td>EarthRanger Password</td><td>Your EarthRanger password</td></tr>
+      </tbody>
+    </table>
+    <p>Credentials are not validated at setup time. Any authentication errors will appear when the workflow runs.</p>
+    <p>Click <strong>Connect</strong> to save.</p>
+
+    <h3 id="workflow-details">Workflow Details</h3>
+    <table>
+      <thead><tr><th>Field</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Workflow Name</td><td>A short name to identify this run</td></tr>
+        <tr><td>Workflow Description</td><td>Optional notes (e.g. reporting month or site)</td></tr>
+      </tbody>
+    </table>
+
+    <h3 id="time-range">Time Range</h3>
+    <table>
+      <thead><tr><th>Field</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Timezone</td><td>Select the local timezone (e.g. <code>Africa/Nairobi UTC+03:00</code>)</td></tr>
+        <tr><td>Since</td><td>Start date and time &mdash; weather observations from this point are fetched</td></tr>
+        <tr><td>Until</td><td>End date and time of the analysis window</td></tr>
+      </tbody>
+    </table>
+
+    <h3 id="connect-er">Connect to ER</h3>
+    <p>Select the EarthRanger data source configured above from the <strong>Data Source</strong> dropdown (e.g. <code>Mara North Conservancy</code>).</p>
+    <p>Once all sections are filled, click <strong>Submit</strong>.</p>
+
+    <h2 id="run">3. Run the Workflow</h2>
+    <p>Once submitted, the runner will:</p>
+    <ol>
+      <li>Fetch all observations from the subject group <strong>ER2ER - From GMMF</strong> for the analysis period.</li>
+      <li>Extract seven meteorological variables from each observation's JSON detail field: precipitation, surface air temperature, wind speed, wind gusts, soil temperature, relative humidity, and atmospheric pressure.</li>
+      <li>Compute daily aggregates per weather station &mdash; summing precipitation and averaging each remaining variable, except wind gusts which takes the daily maximum.</li>
+      <li>Persist the daily summary as <code>weather_summary_table.csv</code>.</li>
+      <li>Draw seven interactive line charts (one per variable), coloured by weather station.</li>
+      <li>Convert all seven charts to PNG at 1 280 &times; 720 px (2&times; scale).</li>
+      <li>Assemble the dashboard with one plot widget per chart.</li>
+      <li>Save all outputs to the directory specified by <code>ECOSCOPE_WORKFLOWS_RESULTS</code>.</li>
+    </ol>
+
+    <h3 id="output-files">Output Files</h3>
+    <p>All outputs are written to <code>$ECOSCOPE_WORKFLOWS_RESULTS/</code>.</p>
+    <table>
+      <thead><tr><th>File</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>weather_summary_table.csv</code></td><td>Daily per-station summary: sum precipitation, mean temperature / wind / humidity / pressure, max gusts</td></tr>
+        <tr><td><code>precipitation_readings_over_time.html</code> / <code>.png</code></td><td>Daily total precipitation (mm) per weather station</td></tr>
+        <tr><td><code>temperature_readings_over_time.html</code> / <code>.png</code></td><td>Daily mean surface air temperature (&deg;C) per weather station</td></tr>
+        <tr><td><code>wind_speed_readings_over_time.html</code> / <code>.png</code></td><td>Daily mean wind speed per weather station</td></tr>
+        <tr><td><code>wind_gusts_readings_over_time.html</code> / <code>.png</code></td><td>Daily maximum wind gusts per weather station</td></tr>
+        <tr><td><code>soil_temperature_readings_over_time.html</code> / <code>.png</code></td><td>Daily mean soil temperature (&deg;C) per weather station</td></tr>
+        <tr><td><code>relative_humidity_readings_over_time.html</code> / <code>.png</code></td><td>Daily mean relative humidity per weather station</td></tr>
+        <tr><td><code>atmospheric_pressure_readings_over_time.html</code> / <code>.png</code></td><td>Daily mean atmospheric pressure per weather station</td></tr>
+      </tbody>
+    </table>
+
+    <p>Something not working as expected? See <a href="troubleshooting.html">Troubleshooting</a>. For a deeper look at the pipeline internals, see the <a href="technical-guide.html">Technical Guide</a>.</p>
+  </main>
+
+  <footer class="site-footer">
+    <p>MNC Weather Report &middot; <a href="https://github.com/wildlife-dynamics/mnc-weather-report">wildlife-dynamics/mnc-weather-report</a> on GitHub</p>
+  </footer>
+</body>
+</html>

@@ -1,43 +1,34 @@
-# MNC Weather Report — User Guide
+# MNC Weather Report
 
-This guide walks you through configuring and running the MNC Weather Report workflow, which retrieves weather station observations from EarthRanger and produces daily summary tables and interactive time-series charts for seven meteorological variables.
+Retrieves weather station observations from EarthRanger and produces daily summary tables and interactive time-series charts for seven meteorological variables.
 
----
+## What it produces
 
-## Overview
+- **1 daily weather summary CSV** &mdash; precipitation, temperature, wind speed, wind gusts, soil temperature, relative humidity, and atmospheric pressure aggregated per weather station and date
+- **7 line charts (HTML + PNG)** &mdash; one per meteorological variable, coloured by weather station, covering the full analysis time range
+- **An interactive dashboard** &mdash; one plot widget per chart (7 total)
 
-The workflow delivers, for each run:
+## Requirements
 
-- **1 daily weather summary CSV** — precipitation, temperature, wind speed, wind gusts, soil temperature, relative humidity, and atmospheric pressure aggregated per weather station and date
-- **7 line charts (HTML + PNG)** — one per meteorological variable, coloured by weather station, covering the full analysis time range
-
----
-
-## Prerequisites
-
-Before running the workflow, ensure you have:
-
-- Access to an **EarthRanger** instance with weather station observations recorded under the subject group **ER2ER - From GMMF** for the analysis period
+- Access to an **EarthRanger** instance with weather station observations recorded under the subject group **ER2ER - From GMMF** for the analysis period (this subject group name is fixed and not user-configurable)
 
 ---
 
-## Step-by-Step Configuration
+## 1. Load the Workflow
 
-### Step 1 — Add the Workflow Template
-
-In the workflow runner, go to **Workflow Templates** and click **Add Workflow Template**. Paste the GitHub repository URL into the **Github Link** field:
+In the workflow runner, go to **Workflow Templates** and click **Add Workflow Template**. Paste this repository's URL into the **Github Link** field, then click **Add Template**:
 
 ```
-https://github.com/wildlife-dynamics/mnc_weather_report.git
+https://github.com/wildlife-dynamics/mnc-weather-report.git
 ```
 
-Then click **Add Template**.
-
-![Add Workflow Template](data/screenshots/add_workflow.png)
+Once added, it appears in the **Workflow Templates** list as **mnc_weather_report**. Click the card to open the workflow configuration form.
 
 ---
 
-### Step 2 — Configure the EarthRanger Connection
+## 2. Configure the Workflow
+
+### Data Source Connection
 
 Navigate to **Data Sources** and click **Connect**, then select **EarthRanger**. Fill in the connection form:
 
@@ -52,62 +43,43 @@ Navigate to **Data Sources** and click **Connect**, then select **EarthRanger**.
 
 Click **Connect** to save.
 
-![EarthRanger Connection](data/screenshots/er_connection.png)
-
----
-
-### Step 3 — Select the Workflow
-
-After the template is added, it appears in the **Workflow Templates** list as **mnc_weather_report**. Click the card to open the workflow configuration form.
-
-![Select Workflow Template](data/screenshots/select_workflow.png)
-
----
-
-### Step 4 — Configure Workflow Details, Time Range, and EarthRanger Connection
-
-The configuration form has three sections on a single page.
-
-**Set workflow details**
+### Workflow Details
 
 | Field | Description |
 |-------|-------------|
 | Workflow Name | A short name to identify this run |
 | Workflow Description | Optional notes (e.g. reporting month or site) |
 
-**Time range**
+### Time Range
 
 | Field | Description |
 |-------|-------------|
 | Timezone | Select the local timezone (e.g. `Africa/Nairobi UTC+03:00`) |
-| Since | Start date and time — weather observations from this point are fetched |
+| Since | Start date and time &mdash; weather observations from this point are fetched |
 | Until | End date and time of the analysis window |
 
-**Connect to ER**
+### Connect to ER
 
-Select the EarthRanger data source configured in Step 2 from the **Data Source** dropdown (e.g. `Mara North Conservancy`).
+Select the EarthRanger data source configured above from the **Data Source** dropdown (e.g. `Mara North Conservancy`).
 
-Once all three sections are filled, click **Submit**.
-
-![Configure Workflow Details, Time Range, and Connect to ER](data/screenshots/configure_workflow.png)
+Once all sections are filled, click **Submit**.
 
 ---
 
-## Running the Workflow
+## 3. Run the Workflow
 
 Once submitted, the runner will:
 
 1. Fetch all observations from the subject group **ER2ER - From GMMF** for the analysis period.
 2. Extract seven meteorological variables from each observation's JSON detail field: precipitation, surface air temperature, wind speed, wind gusts, soil temperature, relative humidity, and atmospheric pressure.
-3. Compute daily aggregates per weather station — summing precipitation and averaging or maximising each remaining variable.
+3. Compute daily aggregates per weather station &mdash; summing precipitation and averaging each remaining variable, except wind gusts which takes the daily maximum.
 4. Persist the daily summary as `weather_summary_table.csv`.
 5. Draw seven interactive line charts (one per variable), coloured by weather station.
-6. Convert all seven charts to PNG at 1 280 × 720 px (2× scale).
-7. Save all outputs to the directory specified by `ECOSCOPE_WORKFLOWS_RESULTS`.
+6. Convert all seven charts to PNG at 1 280 &times; 720 px (2&times; scale).
+7. Assemble the dashboard with one plot widget per chart.
+8. Save all outputs to the directory specified by `ECOSCOPE_WORKFLOWS_RESULTS`.
 
----
-
-## Output Files
+### Output Files
 
 All outputs are written to `$ECOSCOPE_WORKFLOWS_RESULTS/`.
 
@@ -115,9 +87,28 @@ All outputs are written to `$ECOSCOPE_WORKFLOWS_RESULTS/`.
 |------|-------------|
 | `weather_summary_table.csv` | Daily per-station summary: sum precipitation, mean temperature / wind / humidity / pressure, max gusts |
 | `precipitation_readings_over_time.html` / `.png` | Daily total precipitation (mm) per weather station |
-| `temperature_readings_over_time.html` / `.png` | Daily mean surface air temperature (°C) per weather station |
+| `temperature_readings_over_time.html` / `.png` | Daily mean surface air temperature (&deg;C) per weather station |
 | `wind_speed_readings_over_time.html` / `.png` | Daily mean wind speed per weather station |
 | `wind_gusts_readings_over_time.html` / `.png` | Daily maximum wind gusts per weather station |
-| `soil_temperature_readings_over_time.html` / `.png` | Daily mean soil temperature (°C) per weather station |
+| `soil_temperature_readings_over_time.html` / `.png` | Daily mean soil temperature (&deg;C) per weather station |
 | `relative_humidity_readings_over_time.html` / `.png` | Daily mean relative humidity per weather station |
 | `atmospheric_pressure_readings_over_time.html` / `.png` | Daily mean atmospheric pressure per weather station |
+
+---
+
+## More Help
+
+- **Technical Guide:** [technical_guide/mnc_weather_report_technical_guide.pdf](technical_guide/mnc_weather_report_technical_guide.pdf) &mdash; pipeline internals and task-by-task reference
+- **Issues:** [github.com/wildlife-dynamics/mnc-weather-report/issues](https://github.com/wildlife-dynamics/mnc-weather-report/issues)
+
+## Development
+
+This workflow's code (`ecoscope-workflows-mnc-weather-report-workflow/`) is generated from [`spec.yaml`](spec.yaml) and [`test-cases.yaml`](test-cases.yaml). After editing either file, recompile and commit the generated changes:
+
+```
+pixi run --manifest-path pixi.toml --locked bash -c "./dev/recompile.sh --update"
+```
+
+## License
+
+[BSD 3-Clause](LICENSE)

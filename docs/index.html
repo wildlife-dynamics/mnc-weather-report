@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MNC Weather Report</title>
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="bar">
+      <a class="brand" href="index.html">MNC Weather Report</a>
+      <nav>
+        <a href="index.html" class="active">Overview</a>
+        <a href="user-guide.html">User Guide</a>
+        <a href="technical-guide.html">Technical Guide</a>
+        <a href="troubleshooting.html">Troubleshooting</a>
+        <a href="https://github.com/wildlife-dynamics/mnc-weather-report">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <h1>MNC Weather Report</h1>
+    <p class="lede">Retrieves weather station observations from EarthRanger and produces daily summary tables and interactive time-series charts for seven meteorological variables.</p>
+
+    <div class="card-grid">
+      <a class="card" href="user-guide.html">
+        <h3>User Guide</h3>
+        <p>Step-by-step instructions for loading, configuring, and running the workflow.</p>
+      </a>
+      <a class="card" href="technical-guide.html">
+        <h3>Technical Guide</h3>
+        <p>Deeper look at the workflow's internals — extraction chain, aggregation rules, and chart configuration.</p>
+      </a>
+      <a class="card" href="troubleshooting.html">
+        <h3>Troubleshooting</h3>
+        <p>Common errors you may hit while configuring or running the workflow, and how to resolve them.</p>
+      </a>
+    </div>
+
+    <h2>What it produces</h2>
+    <ul>
+      <li><strong>1 daily weather summary CSV</strong> &mdash; precipitation, temperature, wind speed, wind gusts, soil temperature, relative humidity, and atmospheric pressure aggregated per weather station and date</li>
+      <li><strong>7 line charts (HTML + PNG)</strong> &mdash; one per meteorological variable, coloured by weather station, covering the full analysis time range</li>
+      <li><strong>An interactive dashboard</strong> &mdash; one plot widget per chart (7 total)</li>
+    </ul>
+
+    <h2>Requirements</h2>
+    <ul>
+      <li>Access to an <strong>EarthRanger</strong> instance with weather station observations recorded under the subject group <strong>ER2ER - From GMMF</strong> for the analysis period (this subject group name is fixed and not user-configurable)</li>
+    </ul>
+
+    <h2>Get started</h2>
+    <p>New to the workflow? Start with the <a href="user-guide.html">User Guide</a> for a walkthrough of loading the template, connecting EarthRanger, and running it. Running into an error? Check <a href="troubleshooting.html">Troubleshooting</a> first.</p>
+  </main>
+
+  <footer class="site-footer">
+    <p>MNC Weather Report &middot; <a href="https://github.com/wildlife-dynamics/mnc-weather-report">wildlife-dynamics/mnc-weather-report</a> on GitHub</p>
+  </footer>
+</body>
+</html>
