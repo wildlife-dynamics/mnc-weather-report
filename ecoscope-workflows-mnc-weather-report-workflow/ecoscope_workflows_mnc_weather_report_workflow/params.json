@@ -73,7 +73,7 @@
         "data_source"
       ],
       "type": "object",
-      "title": "Connect to ER"
+      "title": "Connect to EarthRanger"
     }
   },
   "$defs": {
