@@ -13,11 +13,11 @@ requirements:
     channel: conda-forge
 
 workflow:
-  - name: Set workflow details
+  - name: Workflow Details
     id: workflow_details
     task: set_workflow_details
 
-  - name: Time range
+  - name: Time Range
     id: time_range
     task: set_time_range
       
