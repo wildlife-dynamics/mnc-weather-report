@@ -1,21 +1,10 @@
-name:  # Title Case, e.g. "My Ecoscope Workflow Template"
-
-# at least one author is required
+name: MNC Weather Report
 author:
-  - name: ""
-    organization: ""
-    email: ""
+  - name: Tevin Temu
+    organization: Wildlife Dynamics
+    email: tevin@wildlifedynamics.com
 
-description: # A short description
-
-# todo: add example
-theory: "" # optional
-
-# todo: add example
-output_comment: "" # optional
-
-# optional
-# example
-# citation: 
-#   - Wu, Y. et al. (2025). "Monitoring elephant spatial patterns with Ecoscope workflows."
-citation: [] 
+description: Processes Mara North Conservancy weather station observations from EarthRanger and produces a daily per-station summary table and time-series charts for seven meteorological variables, on an interactive dashboard.
+theory: "Precipitation, surface air temperature, wind speed, wind gusts, soil temperature, relative humidity, and atmospheric pressure are extracted from each observation of the ER2ER - From GMMF weather station subject group. Readings are aggregated per station per day: precipitation is summed, wind gusts take the daily maximum, and every other variable takes the daily mean."
+output_comment: "Outputs a daily per-station weather summary table (CSV), seven line charts coloured by weather station (precipitation, temperature, wind speed, wind gusts, soil temperature, relative humidity, and atmospheric pressure) saved as HTML and PNG, and a dashboard with one widget per chart."
+citation: []
