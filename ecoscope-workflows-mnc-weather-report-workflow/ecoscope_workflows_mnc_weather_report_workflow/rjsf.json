@@ -74,6 +74,20 @@
       ],
       "type": "object",
       "title": "Connect to EarthRanger"
+    },
+    "add_pressure_factor": {
+      "additionalProperties": false,
+      "properties": {
+        "noop_if_column_exists": {
+          "default": false,
+          "title": "Noop If Column Exists",
+          "type": "boolean",
+          "description": "If set to true and column_name exists on df, do nothing"
+        }
+      },
+      "required": [],
+      "type": "object",
+      "title": "Add kPa to mmHg conversion factor"
     }
   },
   "$defs": {
@@ -137,7 +151,8 @@
     "ui:order": [
       "workflow_details",
       "time_range",
-      "er_client_name"
+      "er_client_name",
+      "add_pressure_factor"
     ]
   },
   "additionalProperties": false
